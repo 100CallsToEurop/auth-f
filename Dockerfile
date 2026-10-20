@@ -14,4 +14,4 @@ WORKDIR /usr/src/app
 
 RUN npm install -g serve@14 --no-audit --no-fund
 
-COPY --from=build /usr/src/app/build ./dist
+COPY --from=build /usr/src/app/dist ./dist
