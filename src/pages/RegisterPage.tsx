@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../lib/api';
+import { ProviderButtons } from '../components/ProviderButtons';
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -78,6 +79,7 @@ export function RegisterPage() {
         <button className="button" type="submit" disabled={submitting}>
           {submitting ? 'Создание аккаунта…' : 'Зарегистрироваться'}
         </button>
+        <ProviderButtons title="Продолжить через" />
         <p className="hint">
           Уже есть аккаунт? <Link to="/login">Войти</Link>
         </p>

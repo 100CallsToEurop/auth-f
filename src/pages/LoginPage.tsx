@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../lib/api';
-import { oidcAuthentikUrl } from '../lib/auth';
+import { ProviderButtons } from '../components/ProviderButtons';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -58,9 +58,7 @@ export function LoginPage() {
         <button className="button" type="submit" disabled={submitting}>
           {submitting ? 'Вход…' : 'Войти'}
         </button>
-        <a className="button secondary" href={oidcAuthentikUrl}>
-          Войти через Authentik
-        </a>
+        <ProviderButtons />
         <p className="hint">
           Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
         </p>

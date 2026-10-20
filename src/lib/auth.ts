@@ -1,4 +1,13 @@
-import { API_URL, ApiError, apiRequest, setAccessToken, type Session, type User } from './api';
+import {
+  API_URL,
+  ApiError,
+  DEFAULT_PROVIDERS,
+  apiRequest,
+  setAccessToken,
+  type ProviderInfo,
+  type Session,
+  type User,
+} from './api';
 
 export function login(email: string, password: string): Promise<Session> {
   return startSession('/auth/login', { email, password });
@@ -23,7 +32,37 @@ export function fetchCurrentUser(): Promise<User> {
   return apiRequest<User>('/auth/me');
 }
 
-export const oidcAuthentikUrl = `${API_URL}/api/auth/oidc/authentik`;
+/** URL начала входа через внешний провайдер (полный редирект браузера). */
+export function externalAuthUrl(slug: string): string {
+  return `${API_URL}/api/auth/external/${slug}`;
+}
+
+/**
+ * Синхронизация профиля из провайдера: браузер уходит на callback провайдера,
+ * backend после подтверждения обновит профиль и вернёт в приложение.
+ */
+export function externalSyncUrl(slug: string): string {
+  return `${API_URL}/api/auth/external/${slug}/sync`;
+}
+
+/** Отвязка способа входа от аккаунта. */
+export function unlinkProvider(slug: string): Promise<User> {
+  return apiRequest<User>(`/auth/external/${slug}`, { method: 'DELETE' });
+}
+
+/** Список включённых провайдеров (при недоступности API — дефолтный набор). */
+export async function fetchProviders(): Promise<ProviderInfo[]> {
+  try {
+    const providers = await apiRequest<ProviderInfo[]>('/auth/providers', {
+      auth: false,
+    });
+    return Array.isArray(providers) && providers.length
+      ? providers
+      : DEFAULT_PROVIDERS;
+  } catch {
+    return DEFAULT_PROVIDERS;
+  }
+}
 
 async function startSession(path: string, body: { email: string; password: string }): Promise<Session> {
   const session = await apiRequest<Session>(path, { method: 'POST', body, auth: false });

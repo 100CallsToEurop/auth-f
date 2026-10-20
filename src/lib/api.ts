@@ -1,12 +1,29 @@
 export interface User {
   id: string;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  /** Способы входа, привязанные к аккаунту: 'password', 'authentik', 'yandex', 'github'. */
+  providers: string[];
 }
 
 export interface Session {
   user: User;
   accessToken: string;
 }
+
+export interface ProviderInfo {
+  slug: string;
+  displayName: string;
+}
+
+/** Провайдеры, которые предлагаем, если реестр недоступен. */
+export const DEFAULT_PROVIDERS: ProviderInfo[] = [
+  { slug: 'authentik', displayName: 'Authentik' },
+  { slug: 'yandex', displayName: 'Яндекс' },
+  { slug: 'github', displayName: 'GitHub' },
+];
 
 export class ApiError extends Error {
   constructor(
