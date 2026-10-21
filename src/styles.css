@@ -234,6 +234,23 @@ input:focus {
   color: var(--error-text);
 }
 
+.sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.muted.small {
+  font-size: 0.75rem;
+}
+
 .spinner {
   width: 32px;
   height: 32px;

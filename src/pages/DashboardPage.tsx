@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { ApiError, type User } from '../lib/api';
 import { fetchCurrentUser } from '../lib/auth';
 import { ProviderSettings } from '../components/ProviderButtons';
+import { SessionsPanel } from '../components/SessionsPanel';
 
 const PROVIDER_LABELS: Record<string, string> = {
   password: 'Пароль',
   authentik: 'Authentik',
   yandex: 'Яндекс',
   github: 'GitHub',
+  invision: 'Invision Community',
 };
 
 function displayName(user: User): string {
@@ -95,6 +97,11 @@ export function DashboardPage() {
         <ProviderSettings
           linked={current.providers ?? []}
           onChange={setProfile}
+          onError={setError}
+        />
+        <SessionsPanel
+          providers={current.providers ?? []}
+          onLogout={() => navigate('/login', { replace: true })}
           onError={setError}
         />
         <button className="button secondary" onClick={() => void handleLogout()} disabled={loggingOut}>

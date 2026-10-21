@@ -4,7 +4,7 @@ export interface User {
   firstName: string | null;
   lastName: string | null;
   displayName: string | null;
-  /** Способы входа, привязанные к аккаунту: 'password', 'authentik', 'yandex', 'github'. */
+  /** Способы входа, привязанные к аккаунту: 'password', 'authentik', 'yandex', 'github', 'invision'. */
   providers: string[];
 }
 
@@ -23,6 +23,7 @@ export const DEFAULT_PROVIDERS: ProviderInfo[] = [
   { slug: 'authentik', displayName: 'Authentik' },
   { slug: 'yandex', displayName: 'Яндекс' },
   { slug: 'github', displayName: 'GitHub' },
+  { slug: 'invision', displayName: 'Invision Community' },
 ];
 
 export class ApiError extends Error {

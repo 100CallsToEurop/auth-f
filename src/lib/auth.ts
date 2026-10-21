@@ -28,6 +28,40 @@ export async function logout(): Promise<void> {
   setAccessToken(null);
 }
 
+/** Описание активной сессии (устройства) пользователя. */
+export interface SessionInfo {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string;
+  current: boolean;
+}
+
+export function fetchSessions(): Promise<SessionInfo[]> {
+  return apiRequest<SessionInfo[]>('/auth/sessions');
+}
+
+/** Отозвать одну сессию (устройство) по id. */
+export function revokeSession(id: string): Promise<{ ok: true }> {
+  return apiRequest<{ ok: true }>(`/auth/sessions/${id}`, { method: 'DELETE' });
+}
+
+/**
+ * Выход со всех устройств. Если провайдер поддерживает RP-initiated logout
+ * (Authentik), возвращает URL выхода из SSO-сессии — по нему нужно перейти.
+ */
+export async function logoutAll(provider?: string): Promise<string | null> {
+  const query = provider ? `?provider=${encodeURIComponent(provider)}` : '';
+  const result = await apiRequest<{ logoutUrl?: string | null }>(
+    `/auth/logout/all${query}`,
+    { method: 'POST' },
+  );
+  setAccessToken(null);
+  return result.logoutUrl ?? null;
+}
+
 export function fetchCurrentUser(): Promise<User> {
   return apiRequest<User>('/auth/me');
 }
