@@ -17,7 +17,7 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string) => Promise<User>;
-  logout: () => Promise<void>;
+  logout: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -60,9 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return session.user;
   }, []);
 
-  const logout = useCallback(async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<string | null> => {
+    let logoutUrl: string | null = null;
     try {
-      await apiLogout();
+      logoutUrl = await apiLogout();
     } catch (error) {
       if (!(error instanceof ApiError)) {
         throw error;
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null);
     setStatus('unauthenticated');
+    return logoutUrl;
   }, []);
 
   const value = useMemo(

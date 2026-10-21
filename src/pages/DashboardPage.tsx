@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ApiError, type User } from '../lib/api';
 import { fetchCurrentUser } from '../lib/auth';
@@ -24,7 +23,6 @@ function displayName(user: User): string {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [profile, setProfile] = useState<User | null>(user);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +47,12 @@ export function DashboardPage() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await logout();
-      navigate('/login', { replace: true });
+      const logoutUrl = await logout();
+      if (logoutUrl) {
+        window.location.href = logoutUrl;
+        return;
+      }
+      window.location.href = '/login';
     } finally {
       setLoggingOut(false);
     }
@@ -99,11 +101,7 @@ export function DashboardPage() {
           onChange={setProfile}
           onError={setError}
         />
-        <SessionsPanel
-          providers={current.providers ?? []}
-          onLogout={() => navigate('/login', { replace: true })}
-          onError={setError}
-        />
+        <SessionsPanel onError={setError} />
         <button className="button secondary" onClick={() => void handleLogout()} disabled={loggingOut}>
           {loggingOut ? 'Выход…' : 'Выйти'}
         </button>

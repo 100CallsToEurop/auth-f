@@ -23,9 +23,17 @@ export async function refreshSession(): Promise<Session> {
   return session;
 }
 
-export async function logout(): Promise<void> {
-  await apiRequest('/auth/logout', { method: 'POST', auth: false });
+/**
+ * Выход из текущей сессии. Возвращает URL выхода из SSO-провайдера, если
+ * текущая сессия была открыта через него, — по нему нужно перейти.
+ */
+export async function logout(): Promise<string | null> {
+  const result = await apiRequest<{ logoutUrl?: string | null }>('/auth/logout', {
+    method: 'POST',
+    auth: false,
+  });
   setAccessToken(null);
+  return result.logoutUrl ?? null;
 }
 
 /** Описание активной сессии (устройства) пользователя. */
@@ -59,13 +67,12 @@ export function revokeOtherSessions(): Promise<{ ok: true; revoked: number }> {
 }
 
 /**
- * Выход со всех устройств. Если провайдер поддерживает RP-initiated logout
- * (Authentik), возвращает URL выхода из SSO-сессии — по нему нужно перейти.
+ * Выход со всех устройств. Если текущая сессия открыта через SSO-провайдер
+ * (Authentik), возвращает URL выхода из его SSO-сессии — по нему нужно перейти.
  */
-export async function logoutAll(provider?: string): Promise<string | null> {
-  const query = provider ? `?provider=${encodeURIComponent(provider)}` : '';
+export async function logoutAll(): Promise<string | null> {
   const result = await apiRequest<{ logoutUrl?: string | null }>(
-    `/auth/logout/all${query}`,
+    '/auth/logout/all',
     { method: 'POST' },
   );
   setAccessToken(null);

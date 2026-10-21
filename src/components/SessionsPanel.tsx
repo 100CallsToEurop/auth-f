@@ -9,9 +9,6 @@ import {
 } from '../lib/auth';
 
 interface SessionsPanelProps {
-  /** Провайдеры входа аккаунта — для RP-initiated logout (Authentik). */
-  providers: string[];
-  onLogout: () => void;
   onError: (message: string) => void;
 }
 
@@ -22,9 +19,14 @@ function formatDate(value: string | null): string {
   return new Date(value).toLocaleString();
 }
 
-export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelProps) {
+export function SessionsPanel({ onError }: SessionsPanelProps) {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+
+  const completeLogout = useCallback(() => {
+    // Жёсткий переход на страницу входа — сбрасывает состояние приложения.
+    window.location.href = '/login';
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -69,17 +71,15 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
   const handleLogoutAll = async () => {
     setBusy('all');
     try {
-      // SSO-провайдер для RP-initiated logout: OIDC-провайдеры аккаунта.
-      const provider = providers.find((item) =>
-        ['authentik'].includes(item),
-      );
-      const logoutUrl = await logoutAll(provider);
+      // Бэкенд сам определяет провайдера текущей сессии: если вход был через
+      // SSO (Authentik) — вернёт URL выхода из SSO, иначе просто выходим.
+      const logoutUrl = await logoutAll();
       if (logoutUrl) {
         window.location.href = logoutUrl;
         return;
       }
       // Завершены все сессии (включая текущую) — уводим на страницу входа.
-      onLogout();
+      completeLogout();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Не удалось выполнить выход');
     } finally {
