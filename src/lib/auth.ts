@@ -48,6 +48,14 @@ export function revokeSession(id: string): Promise<{ ok: true }> {
   return apiRequest<{ ok: true }>(`/auth/sessions/${id}`, { method: 'DELETE' });
 }
 
+/** Завершить все другие сессии, оставив текущую. */
+export function revokeOtherSessions(): Promise<{ ok: true; revoked: number }> {
+  return apiRequest<{ ok: true; revoked: number }>(
+    '/auth/sessions/revoke-others',
+    { method: 'POST' },
+  );
+}
+
 /**
  * Выход со всех устройств. Если провайдер поддерживает RP-initiated logout
  * (Authentik), возвращает URL выхода из SSO-сессии — по нему нужно перейти.

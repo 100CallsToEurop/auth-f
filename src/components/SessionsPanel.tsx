@@ -3,6 +3,7 @@ import { ApiError } from '../lib/api';
 import {
   fetchSessions,
   logoutAll,
+  revokeOtherSessions,
   revokeSession,
   type SessionInfo,
 } from '../lib/auth';
@@ -80,6 +81,20 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
     }
   };
 
+  const handleRevokeOthers = async () => {
+    setBusy('others');
+    try {
+      await revokeOtherSessions();
+      await load();
+    } catch (err) {
+      onError(
+        err instanceof Error ? err.message : 'Не удалось завершить другие сессии',
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const handleLogoutAll = async () => {
     setBusy('all');
     try {
@@ -92,6 +107,7 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
         window.location.href = logoutUrl;
         return;
       }
+      // Завершены все сессии (включая текущую) — уводим на страницу входа.
       onLogout();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Не удалось выполнить выход');
@@ -99,6 +115,8 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
       setBusy(null);
     }
   };
+
+  const hasOtherSessions = sessions.some((session) => !session.current);
 
   return (
     <div className="sessions">
@@ -130,13 +148,27 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
           </div>
         ))
       )}
-      <button
-        className="button secondary"
-        onClick={() => void handleLogoutAll()}
-        disabled={busy === 'all'}
-      >
-        {busy === 'all' ? 'Выход…' : 'Выйти со всех устройств'}
-      </button>
+      <div className="sessions-actions">
+        <button
+          className="button secondary"
+          onClick={() => void handleRevokeOthers()}
+          disabled={busy !== null || !hasOtherSessions}
+          title={
+            hasOtherSessions
+              ? 'Завершить все сессии, кроме текущей'
+              : 'Других активных сессий нет'
+          }
+        >
+          {busy === 'others' ? 'Завершение…' : 'Завершить другие сессии'}
+        </button>
+        <button
+          className="button secondary"
+          onClick={() => void handleLogoutAll()}
+          disabled={busy !== null}
+        >
+          {busy === 'all' ? 'Выход…' : 'Выйти со всех устройств'}
+        </button>
+      </div>
     </div>
   );
 }

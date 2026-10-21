@@ -251,6 +251,12 @@ input:focus {
   font-size: 0.75rem;
 }
 
+.sessions-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .spinner {
   width: 32px;
   height: 32px;
