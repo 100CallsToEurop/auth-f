@@ -15,35 +15,6 @@ interface SessionsPanelProps {
   onError: (message: string) => void;
 }
 
-function describeSession(session: SessionInfo): string {
-  if (!session.userAgent) {
-    return 'Неизвестное устройство';
-  }
-  const ua = session.userAgent;
-  const browser =
-    /firefox/i.test(ua)
-      ? 'Firefox'
-      : /edg/i.test(ua)
-        ? 'Edge'
-        : /chrome/i.test(ua)
-          ? 'Chrome'
-          : /safari/i.test(ua)
-            ? 'Safari'
-            : 'Браузер';
-  const os = /windows/i.test(ua)
-    ? 'Windows'
-    : /mac os|macintosh/i.test(ua)
-      ? 'macOS'
-      : /android/i.test(ua)
-        ? 'Android'
-        : /iphone|ipad|ios/i.test(ua)
-          ? 'iOS'
-          : /linux/i.test(ua)
-            ? 'Linux'
-            : '';
-  return os ? `${browser} · ${os}` : browser;
-}
-
 function formatDate(value: string | null): string {
   if (!value) {
     return '—';
@@ -127,10 +98,10 @@ export function SessionsPanel({ providers, onLogout, onError }: SessionsPanelPro
         sessions.map((session) => (
           <div className="provider-row" key={session.id}>
             <span>
-              {describeSession(session)}
+              {session.device}
               {session.current && <span className="chip">текущая</span>}
               <div className="muted small">
-                {session.ip ?? '—'} · вход: {formatDate(session.createdAt)}
+                IP: {session.ip ?? '—'} · вход: {formatDate(session.createdAt)}
               </div>
             </span>
             <div className="provider-actions">

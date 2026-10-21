@@ -32,6 +32,8 @@ export async function logout(): Promise<void> {
 export interface SessionInfo {
   id: string;
   userAgent: string | null;
+  /** Человекочитаемое устройство, напр. «Chrome · macOS». */
+  device: string;
   ip: string | null;
   createdAt: string;
   lastUsedAt: string | null;
