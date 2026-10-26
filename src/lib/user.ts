@@ -1,12 +1,11 @@
 import type { User } from './api';
 
-/** Отображаемое имя: displayName → «Имя Фамилия» → email. */
+/** Отображаемое имя: «Фамилия Имя Отчество» → displayName → email. */
 export function displayName(user: User): string {
-  if (user.displayName) {
-    return user.displayName;
-  }
-  const composed = [user.firstName, user.lastName].filter(Boolean).join(' ');
-  return composed || user.email;
+  const composed = [user.lastName, user.firstName, user.middleName]
+    .filter(Boolean)
+    .join(' ');
+  return composed || user.displayName || user.email;
 }
 
 /** Инициалы для аватара. */

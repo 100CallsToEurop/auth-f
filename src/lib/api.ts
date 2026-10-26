@@ -3,6 +3,12 @@ export interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  middleName: string | null;
+  organization: string | null;
+  position: string | null;
+  phone: string | null;
+  /** Телефон подтверждён; до этого редактирование профиля недоступно. */
+  phoneVerified: boolean;
   displayName: string | null;
   /** Способы входа, привязанные к аккаунту: 'password', 'authentik', 'yandex', 'github', 'invision'. */
   providers: string[];

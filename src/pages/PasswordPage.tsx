@@ -1,8 +1,8 @@
 import { PageHeader } from '../components/PageHeader';
 import { PasswordSection } from '../components/PasswordSection';
-import { useProfileOutlet } from './useProfileOutlet';
+import { useProfileOutlet } from '../pages/useProfileOutlet';
 
-/** Создание пароля для входа по email. */
+/** Создание или смена пароля для входа по email. */
 export function PasswordPage() {
   const { user, updateUser } = useProfileOutlet();
   const hasPassword = user.providers?.includes('password') ?? false;
@@ -15,16 +15,8 @@ export function PasswordPage() {
       />
 
       <section className="panel">
-        {hasPassword ? (
-          <div className="notice" role="status">
-            <span>Пароль задан.</span>
-            <span className="muted small">
-              Используйте email {user.email} и этот пароль на странице входа.
-            </span>
-          </div>
-        ) : (
-          <PasswordSection onChange={updateUser} />
-        )}
+        <h2>{hasPassword ? 'Смена пароля' : 'Создание пароля'}</h2>
+        <PasswordSection hasPassword={hasPassword} onChange={updateUser} />
       </section>
     </div>
   );

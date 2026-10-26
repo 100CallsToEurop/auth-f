@@ -29,11 +29,43 @@ export function attachPassword(
   return startSession('/auth/register/attach-password', { email, password });
 }
 
-/** Создание пароля в профиле (только если пароля ещё нет). */
-export function setPassword(password: string): Promise<User> {
+/** Создание пароля или смена существующего (тогда нужен currentPassword). */
+export function setPassword(
+  password: string,
+  currentPassword?: string,
+): Promise<User> {
   return apiRequest<User>('/auth/password', {
     method: 'PUT',
-    body: { password },
+    body: currentPassword
+      ? { password, currentPassword }
+      : { password },
+  });
+}
+
+/** Поля профиля, которые можно редактировать после подтверждения телефона. */
+export interface ProfileUpdateInput {
+  firstName?: string | null;
+  lastName?: string | null;
+  middleName?: string | null;
+  organization?: string | null;
+  position?: string | null;
+}
+
+export function updateProfile(input: ProfileUpdateInput): Promise<User> {
+  return apiRequest<User>('/auth/profile', {
+    method: 'PATCH',
+    body: input,
+  });
+}
+
+/**
+ * Условное подтверждение телефона: SMS не отправляется, номер сразу
+ * сохраняется как подтверждённый и открывает редактирование профиля.
+ */
+export function confirmPhone(phone: string): Promise<User> {
+  return apiRequest<User>('/auth/profile/phone/confirm', {
+    method: 'POST',
+    body: { phone },
   });
 }
 

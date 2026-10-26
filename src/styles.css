@@ -10,8 +10,12 @@
   --accent-soft: #e8efff;
   --success-text: #15803d;
   --success-bg: #f0fdf4;
+  --warn-text: #92400e;
+  --warn-bg: #fffbeb;
+  --warn-border: #fcd34d;
   --error-bg: #fef2f2;
   --error-text: #b91c1c;
+  --topbar-height: 65px;
   font-family:
     'Inter',
     system-ui,
@@ -34,6 +38,9 @@
     --accent-soft: #1b2b45;
     --success-text: #86efac;
     --success-bg: #13251c;
+    --warn-text: #fcd34d;
+    --warn-bg: #2a2210;
+    --warn-border: #7c5a12;
     --error-bg: #2a1517;
     --error-text: #fca5a5;
   }
@@ -50,41 +57,82 @@ body {
   color: var(--text);
 }
 
-/* Оболочка личного кабинета: постоянное левое меню и область контента. */
-.app-shell {
+/* Каркас личного кабинета: верхняя панель на всю ширину, под ней меню и
+   контент. Карточка пользователя живёт в правом верхнем углу. */
+.app-frame {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
-.sidebar {
+.app-topbar {
   position: sticky;
   top: 0;
+  z-index: 10;
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 272px;
-  height: 100vh;
-  flex: 0 0 auto;
-  padding: 24px 16px;
-  border-right: 1px solid var(--border);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--topbar-height);
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
   background: var(--card-bg);
 }
 
-.sidebar-top {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.sidebar-brand {
+.topbar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
+  min-width: 0;
   color: var(--text);
   font-weight: 600;
   font-size: 0.9375rem;
   text-decoration: none;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 10px 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.topbar-user-info {
+  min-width: 0;
+  text-align: right;
+}
+
+.topbar-user-name,
+.topbar-user-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.topbar-user-email {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.topbar-user .avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 0.75rem;
+}
+
+.app-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .brand-mark {
@@ -93,6 +141,7 @@ body {
   justify-content: center;
   width: 32px;
   height: 32px;
+  flex: 0 0 auto;
   border-radius: 8px;
   background: var(--accent);
   color: #ffffff;
@@ -101,35 +150,18 @@ body {
   letter-spacing: 0.03em;
 }
 
-.sidebar-user {
+.sidebar {
+  position: sticky;
+  top: var(--topbar-height);
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-}
-
-.sidebar-user-info {
-  min-width: 0;
-}
-
-.sidebar-user-name,
-.sidebar-user-email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sidebar-user-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.sidebar-user-email {
-  color: var(--muted);
-  font-size: 0.75rem;
+  flex-direction: column;
+  gap: 24px;
+  width: 272px;
+  height: calc(100vh - var(--topbar-height));
+  flex: 0 0 auto;
+  padding: 24px 16px;
+  border-right: 1px solid var(--border);
+  background: var(--card-bg);
 }
 
 .avatar {
@@ -574,6 +606,66 @@ input:focus {
   max-width: 420px;
 }
 
+/* Форма профиля: две колонки на широком экране, одна на узком. */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.form-grid:disabled {
+  opacity: 0.6;
+}
+
+.form-grid .field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Панель условного подтверждения телефона. */
+.phone-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.phone-form .field {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.panel-attention {
+  border-color: var(--warn-border);
+}
+
+.notice.success {
+  border-color: transparent;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.badge.warn {
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
 .providers {
   display: flex;
   flex-direction: column;
@@ -735,32 +827,24 @@ input:focus {
 }
 
 @media (max-width: 820px) {
-  .app-shell {
-    flex-direction: column;
+  .app-topbar {
+    padding: 10px 16px;
   }
 
   .sidebar {
     position: static;
     width: 100%;
     height: auto;
-    gap: 14px;
-    padding: 14px 16px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
 
-  .sidebar-top {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .sidebar-user {
-    display: none;
-  }
-
   .nav {
+    flex: 1 1 auto;
     flex-direction: row;
     gap: 6px;
     overflow-x: auto;
@@ -784,12 +868,14 @@ input:focus {
 
   .sidebar-footer {
     margin-top: 0;
+    flex: 0 0 auto;
   }
 
   .sidebar-logout {
     width: auto;
     padding: 8px 10px;
     border-top: none;
+    white-space: nowrap;
   }
 
   .app-main {
@@ -798,6 +884,14 @@ input:focus {
 }
 
 @media (max-width: 560px) {
+  .topbar-user {
+    padding: 4px;
+  }
+
+  .topbar-user-info {
+    display: none;
+  }
+
   .profile-hero {
     flex-direction: column;
     align-items: flex-start;
@@ -806,6 +900,15 @@ input:focus {
 
   .panel {
     padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-actions .button,
+  .phone-form .button {
+    width: 100%;
   }
 
   .provider-row {

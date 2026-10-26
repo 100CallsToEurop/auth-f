@@ -90,9 +90,10 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? 'nav-link active' : 'nav-link';
 
 /**
- * Оболочка личного кабинета: левое меню и общие данные профиля.
- * Профиль и список провайдеров загружаются один раз и передаются страницам
- * через Outlet context, поэтому переключение разделов не повторяет запросы.
+ * Оболочка личного кабинета: верхняя панель с данными пользователя, левое
+ * меню и область контента. Профиль и список провайдеров загружаются один раз
+ * и передаются страницам через Outlet context, поэтому переключение разделов
+ * не повторяет запросы.
  */
 export function AppLayout() {
   const { user: sessionUser, logout } = useAuth();
@@ -172,91 +173,93 @@ export function AppLayout() {
   const hasPassword = user.providers?.includes('password') ?? false;
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-top">
-          <Link className="sidebar-brand" to="/profile">
-            <span className="brand-mark" aria-hidden="true">
-              ЛК
-            </span>
-            <span>Личный кабинет</span>
-          </Link>
+    <div className="app-frame">
+      <header className="app-topbar">
+        <Link className="topbar-brand" to="/profile">
+          <span className="brand-mark" aria-hidden="true">
+            ЛК
+          </span>
+          <span>Личный кабинет</span>
+        </Link>
 
-          <div className="sidebar-user">
-            <div className="avatar" aria-hidden="true">
-              {initials(user)}
+        <div className="topbar-user">
+          <div className="topbar-user-info">
+            <div className="topbar-user-name" title={displayName(user)}>
+              {displayName(user)}
             </div>
-            <div className="sidebar-user-info">
-              <div className="sidebar-user-name" title={displayName(user)}>
-                {displayName(user)}
+            <div className="topbar-user-email" title={user.email}>
+              {user.email}
+            </div>
+          </div>
+          <div className="avatar" aria-hidden="true">
+            {initials(user)}
+          </div>
+        </div>
+      </header>
+
+      <div className="app-body">
+        <aside className="sidebar">
+          <nav className="nav" aria-label="Разделы профиля">
+            <div className="nav-group">
+              <div className="nav-title">Аккаунт</div>
+              <NavLink to="/profile" className={navLinkClass}>
+                <ProfileIcon />
+                <span>Профиль</span>
+              </NavLink>
+              <NavLink to="/providers" className={navLinkClass}>
+                <ProvidersIcon />
+                <span>Способы входа</span>
+              </NavLink>
+            </div>
+
+            <div className="nav-group">
+              <div className="nav-title">Безопасность</div>
+              <NavLink to="/password" className={navLinkClass}>
+                <PasswordIcon />
+                <span>Пароль</span>
+                {!hasPassword && <span className="nav-badge">не задан</span>}
+              </NavLink>
+              <NavLink to="/sessions" className={navLinkClass}>
+                <SessionsIcon />
+                <span>Сессии</span>
+              </NavLink>
+            </div>
+          </nav>
+
+          <div className="sidebar-footer">
+            <button
+              type="button"
+              className="sidebar-logout"
+              onClick={() => void handleLogout()}
+              disabled={loggingOut}
+            >
+              <LogoutIcon />
+              <span>{loggingOut ? 'Выход…' : 'Выйти'}</span>
+            </button>
+          </div>
+        </aside>
+
+        <main className="app-main">
+          <div className="app-content">
+            {error && (
+              <div className="app-error" role="alert">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  className="app-error-close"
+                  onClick={() => setError(null)}
+                  aria-label="Закрыть сообщение"
+                >
+                  ×
+                </button>
               </div>
-              <div className="sidebar-user-email" title={user.email}>
-                {user.email}
-              </div>
-            </div>
+            )}
+            <Outlet
+              context={{ user, providers, updateUser, reportError }}
+            />
           </div>
-        </div>
-
-        <nav className="nav" aria-label="Разделы профиля">
-          <div className="nav-group">
-            <div className="nav-title">Аккаунт</div>
-            <NavLink to="/profile" className={navLinkClass}>
-              <ProfileIcon />
-              <span>Профиль</span>
-            </NavLink>
-            <NavLink to="/providers" className={navLinkClass}>
-              <ProvidersIcon />
-              <span>Способы входа</span>
-            </NavLink>
-          </div>
-
-          <div className="nav-group">
-            <div className="nav-title">Безопасность</div>
-            <NavLink to="/password" className={navLinkClass}>
-              <PasswordIcon />
-              <span>Пароль</span>
-              {!hasPassword && <span className="nav-badge">не задан</span>}
-            </NavLink>
-            <NavLink to="/sessions" className={navLinkClass}>
-              <SessionsIcon />
-              <span>Сессии</span>
-            </NavLink>
-          </div>
-        </nav>
-
-        <div className="sidebar-footer">
-          <button
-            type="button"
-            className="sidebar-logout"
-            onClick={() => void handleLogout()}
-            disabled={loggingOut}
-          >
-            <LogoutIcon />
-            <span>{loggingOut ? 'Выход…' : 'Выйти'}</span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="app-main">
-        <div className="app-content">
-          {error && (
-            <div className="app-error" role="alert">
-              <span>{error}</span>
-              <button
-                type="button"
-                className="app-error-close"
-                onClick={() => setError(null)}
-                aria-label="Закрыть сообщение"
-              >
-                ×
-              </button>
-            </div>
-          )}
-          <Outlet
-            context={{ user, providers, updateUser, reportError }}
-          />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
