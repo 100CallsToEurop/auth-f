@@ -148,6 +148,26 @@ input:focus {
   color: var(--accent);
 }
 
+/* Форма внутри карточки: та же колонка, что и у .card, но без рамки. */
+.card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Пояснение на промежуточном экране (совпадение email при SSO-входе). */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.875rem;
+}
+
 .details {
   margin: 0;
   display: flex;

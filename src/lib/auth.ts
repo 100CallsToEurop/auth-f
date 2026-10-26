@@ -4,6 +4,7 @@ import {
   apiRequest,
   refreshAccessToken,
   setAccessToken,
+  type AccountLinkInfo,
   type ProviderInfo,
   type Session,
   type User,
@@ -121,6 +122,68 @@ export function consumeProviderAccessToken(): string | null {
   return token;
 }
 
+/** Токен заявки на привязку SSO; кешируется, чтобы StrictMode не потерял его. */
+let accountLinkToken: string | null | undefined;
+
+/**
+ * Забирает одноразовый токен привязки из fragment'а URL. Вызывается один раз
+ * до рендера, как и consumeProviderAccessToken: React StrictMode повторно
+ * запускает инициализаторы, а адресная строка уже очищена.
+ */
+export function consumeAccountLinkToken(): void {
+  if (accountLinkToken !== undefined) {
+    return;
+  }
+
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash) {
+    accountLinkToken = null;
+    return;
+  }
+
+  const params = new URLSearchParams(hash);
+  accountLinkToken = params.get('link_token');
+  if (!accountLinkToken) {
+    return;
+  }
+
+  params.delete('link_token');
+  const rest = params.toString();
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${window.location.search}${rest ? `#${rest}` : ''}`,
+  );
+}
+
+export function getAccountLinkToken(): string | null {
+  return accountLinkToken ?? null;
+}
+
+export function clearAccountLinkToken(): void {
+  accountLinkToken = null;
+}
+
+/** Данные для промежуточного экрана привязки (email, провайдер, наличие пароля). */
+export function fetchAccountLinkInfo(token: string): Promise<AccountLinkInfo> {
+  return apiRequest<AccountLinkInfo>('/auth/account-link/info', {
+    method: 'POST',
+    body: { token },
+    auth: false,
+  });
+}
+
+/**
+ * Подтверждение владения существующим аккаунтом паролем. Только после этого
+ * backend привязывает SSO-идентичность и выдаёт сессию.
+ */
+export function confirmAccountLink(
+  token: string,
+  password: string,
+): Promise<Session> {
+  return startSession('/auth/account-link/confirm', { token, password });
+}
+
 /**
  * URL отдельного входа через конкретного провайдера. Callback сам определяет
  * браузерный переход по заголовку Accept: браузер получает редирект в SPA
@@ -168,8 +231,15 @@ export async function fetchProviders(): Promise<ProviderInfo[]> {
   }
 }
 
-async function startSession(path: string, body: { email: string; password: string }): Promise<Session> {
-  const session = await apiRequest<Session>(path, { method: 'POST', body, auth: false });
+async function startSession(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<Session> {
+  const session = await apiRequest<Session>(path, {
+    method: 'POST',
+    body,
+    auth: false,
+  });
   if (!session?.accessToken) {
     throw new ApiError(500, 'Сервер не вернул токен доступа');
   }

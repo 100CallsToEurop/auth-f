@@ -18,6 +18,16 @@ export interface ProviderInfo {
   displayName: string;
 }
 
+/** Контекст незавершённой привязки SSO к существующему аккаунту. */
+export interface AccountLinkInfo {
+  provider: string;
+  providerName: string;
+  email: string;
+  /** У аккаунта есть пароль — можно подтвердить владение на форме. */
+  hasPassword: boolean;
+  expiresAt: string;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,

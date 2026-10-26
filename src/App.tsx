@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { AccountLinkPage } from './pages/AccountLinkPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -54,6 +55,10 @@ export default function App() {
           </GuestRoute>
         }
       />
+      {/* Экран подтверждения привязки SSO открыт и гостю, и вошедшему
+          пользователю: сессию здесь ещё не выдаём, а GuestRoute отправил бы
+          вошедшего на главную, сломав подтверждение. */}
+      <Route path="/link-account" element={<AccountLinkPage />} />
       <Route
         path="/"
         element={
