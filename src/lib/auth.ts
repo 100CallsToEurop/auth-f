@@ -122,12 +122,12 @@ export function consumeProviderAccessToken(): string | null {
 }
 
 /**
- * URL отдельного входа через конкретного провайдера. `redirect=frontend`
- * просит backend вернуть браузер в SPA с accessToken во фрагменте URL;
- * остальные клиенты получают JSON с токеном.
+ * URL отдельного входа через конкретного провайдера. Callback сам определяет
+ * браузерный переход по заголовку Accept: браузер получает редирект в SPA
+ * с accessToken во фрагменте URL, API-клиенты — JSON с токеном.
  */
 export function providerAuthUrl(slug: string): string {
-  return `${API_URL}/api/auth/${slug}?redirect=frontend`;
+  return `${API_URL}/api/auth/${slug}`;
 }
 
 /**
