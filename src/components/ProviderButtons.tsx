@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { type ProviderInfo, type User } from '../lib/api';
 import {
-  externalAuthUrl,
-  externalLinkUrl,
-  externalSyncUrl,
   fetchProviders,
   providerAuthUrl,
+  providerLinkUrl,
+  providerSyncUrl,
   unlinkProvider,
 } from '../lib/auth';
 
@@ -33,35 +32,21 @@ export function ProviderButtons({ title = 'Войти через' }: ProviderBut
   }
 
   return (
-    <>
-      <div className="providers">
-        <div className="providers-title">{title}</div>
-        {providers.map((provider) => (
-          <a
-            key={provider.slug}
-            className="button secondary"
-            href={externalAuthUrl(provider.slug)}
-          >
-            {provider.displayName}
-          </a>
-        ))}
-      </div>
-      <div className="providers">
-        <div className="providers-title">Отдельные входы (API)</div>
-        {providers.map((provider) => (
-          <a
-            key={provider.slug}
-            className="button secondary"
-            href={providerAuthUrl(provider.slug)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Откроется в новой вкладке и вернёт accessToken в JSON"
-          >
-            {provider.displayName}
-          </a>
-        ))}
-      </div>
-    </>
+    <div className="providers">
+      <div className="providers-title">{title}</div>
+      {providers.map((provider) => (
+        <a
+          key={provider.slug}
+          className="button secondary"
+          href={providerAuthUrl(provider.slug)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Откроется в новой вкладке; после входа вернитесь на эту страницу"
+        >
+          {provider.displayName}
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -112,7 +97,7 @@ export function ProviderSettings({
                 // состояние менялось бы обычным переходом по ссылке.
                 <form
                   method="post"
-                  action={externalSyncUrl(provider.slug)}
+                  action={providerSyncUrl(provider.slug)}
                   className="inline-form"
                 >
                   <button type="submit" className="link" title="Обновить профиль из провайдера">
@@ -133,7 +118,7 @@ export function ProviderSettings({
                 // Привязка нового способа входа к текущему аккаунту.
                 <form
                   method="post"
-                  action={externalLinkUrl(provider.slug)}
+                  action={providerLinkUrl(provider.slug)}
                   className="inline-form"
                 >
                   <button type="submit" className="link">

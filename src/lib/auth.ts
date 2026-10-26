@@ -84,11 +84,6 @@ export function fetchCurrentUser(): Promise<User> {
   return apiRequest<User>('/auth/me');
 }
 
-/** URL начала входа через внешний провайдер (полный редирект браузера). */
-export function externalAuthUrl(slug: string): string {
-  return `${API_URL}/api/auth/external/${slug}`;
-}
-
 /**
  * URL отдельного входа через конкретного провайдера. Callback отвечает JSON
  * с accessToken, поэтому ссылку открываем в новой вкладке: приложение
@@ -105,20 +100,20 @@ export function providerAuthUrl(slug: string): string {
  * Запрос отправляется POST-формой: состояние меняется, а refresh-cookie
  * на кросс-сайтовом POST не отправляется (SameSite=Lax).
  */
-export function externalSyncUrl(slug: string): string {
-  return `${API_URL}/api/auth/external/${slug}/sync`;
+export function providerSyncUrl(slug: string): string {
+  return `${API_URL}/api/auth/${slug}/sync`;
 }
 
 /**
  * Явная привязка провайдера к текущему аккаунту (из профиля). Тоже POST.
  */
-export function externalLinkUrl(slug: string): string {
-  return `${API_URL}/api/auth/external/${slug}/link`;
+export function providerLinkUrl(slug: string): string {
+  return `${API_URL}/api/auth/${slug}/link`;
 }
 
 /** Отвязка способа входа от аккаунта. */
 export function unlinkProvider(slug: string): Promise<User> {
-  return apiRequest<User>(`/auth/external/${slug}`, { method: 'DELETE' });
+  return apiRequest<User>(`/auth/${slug}`, { method: 'DELETE' });
 }
 
 /**
