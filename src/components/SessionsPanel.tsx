@@ -21,6 +21,7 @@ function formatDate(value: string | null): string {
 
 export function SessionsPanel({ onError }: SessionsPanelProps) {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
 
   const completeLogout = useCallback(() => {
@@ -35,6 +36,8 @@ export function SessionsPanel({ onError }: SessionsPanelProps) {
       onError(
         err instanceof ApiError ? err.message : 'Не удалось загрузить сессии',
       );
+    } finally {
+      setLoading(false);
     }
   }, [onError]);
 
@@ -90,20 +93,21 @@ export function SessionsPanel({ onError }: SessionsPanelProps) {
   const hasOtherSessions = sessions.some((session) => !session.current);
 
   return (
-    <div className="sessions">
-      <div className="providers-title">Активные сессии</div>
-      {sessions.length === 0 ? (
-        <div className="muted">Нет других активных сессий</div>
+    <div className="session-list">
+      {loading ? (
+        <div className="muted">Загрузка сессий…</div>
+      ) : sessions.length === 0 ? (
+        <div className="muted">Активных сессий нет</div>
       ) : (
         sessions.map((session) => (
           <div className="provider-row" key={session.id}>
-            <span>
+            <div className="session-info">
               {session.device}
               {session.current && <span className="chip">текущая</span>}
               <div className="muted small">
                 IP: {session.ip ?? '—'} · вход: {formatDate(session.createdAt)}
               </div>
-            </span>
+            </div>
             <div className="provider-actions">
               {!session.current && (
                 <button

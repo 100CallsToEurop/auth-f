@@ -3,35 +3,19 @@ import { ApiError, type User } from '../lib/api';
 import { setPassword } from '../lib/auth';
 
 interface PasswordSectionProps {
-  user: User;
   onChange: (user: User) => void;
 }
 
 /**
  * Создание пароля для аккаунта, у которого его нет (например, вход был только
  * через SSO). После этого аккаунт можно открывать по email и паролю.
+ * Смена существующего пароля в этот раздел не входит.
  */
-export function PasswordSection({ user, onChange }: PasswordSectionProps) {
+export function PasswordSection({ onChange }: PasswordSectionProps) {
   const [password, setPasswordValue] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState(false);
-
-  if (created) {
-    return (
-      <div className="providers">
-        <div className="providers-title">Пароль</div>
-        <div className="notice" role="status">
-          <span>Пароль создан. Теперь можно входить по email и паролю.</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (user.providers?.includes('password')) {
-    return null;
-  }
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -50,7 +34,6 @@ export function PasswordSection({ user, onChange }: PasswordSectionProps) {
       const updated = await setPassword(password);
       setPasswordValue('');
       setConfirmation('');
-      setCreated(true);
       onChange(updated);
     } catch (err) {
       setError(
@@ -62,8 +45,7 @@ export function PasswordSection({ user, onChange }: PasswordSectionProps) {
   };
 
   return (
-    <div className="providers">
-      <div className="providers-title">Пароль</div>
+    <div className="password-section">
       <p className="muted small">
         У аккаунта нет пароля. Создайте его, чтобы входить по email и паролю.
       </p>
@@ -95,7 +77,7 @@ export function PasswordSection({ user, onChange }: PasswordSectionProps) {
             required
           />
         </label>
-        <button className="button secondary" type="submit" disabled={submitting}>
+        <button className="button" type="submit" disabled={submitting}>
           {submitting ? 'Создание пароля…' : 'Создать пароль'}
         </button>
       </form>

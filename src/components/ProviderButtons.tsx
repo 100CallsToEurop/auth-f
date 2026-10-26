@@ -82,13 +82,17 @@ export function ProviderSettings({
   }
 
   return (
-    <div className="providers">
-      <div className="providers-title">Способы входа</div>
+    <div className="provider-list">
       {providers.map((provider) => {
         const isLinked = linked.includes(provider.slug);
         return (
           <div className="provider-row" key={provider.slug}>
-            <span>{provider.displayName}</span>
+            <div className="provider-info">
+              <span>{provider.displayName}</span>
+              <span className={`badge ${isLinked ? 'ok' : ''}`}>
+                {isLinked ? 'Привязан' : 'Не привязан'}
+              </span>
+            </div>
             <div className="provider-actions">
               {isLinked && (
                 // Синхронизация меняет данные аккаунта — только POST, иначе

@@ -1,10 +1,14 @@
 import { type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AppLayout } from './components/AppLayout';
 import { useAuth } from './context/AuthContext';
 import { AccountLinkPage } from './pages/AccountLinkPage';
-import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { PasswordPage } from './pages/PasswordPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { ProvidersPage } from './pages/ProvidersPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { SessionsPage } from './pages/SessionsPage';
 
 function Loading() {
   return (
@@ -63,10 +67,16 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="profile" replace />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="providers" element={<ProvidersPage />} />
+        <Route path="password" element={<PasswordPage />} />
+        <Route path="sessions" element={<SessionsPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
