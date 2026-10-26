@@ -85,12 +85,49 @@ export function fetchCurrentUser(): Promise<User> {
 }
 
 /**
- * URL отдельного входа через конкретного провайдера. Callback отвечает JSON
- * с accessToken, поэтому ссылку открываем в новой вкладке: приложение
- * остаётся на месте, а refresh-cookie устанавливается для API.
+ * Вход по accessToken, который backend вернул после OAuth-callback'а.
+ * Токен сразу подставляется в запросы, а пользователь загружается из API —
+ * так мы убеждаемся, что токен действителен.
+ */
+export async function loginWithAccessToken(token: string): Promise<User> {
+  setAccessToken(token);
+  return fetchCurrentUser();
+}
+
+/**
+ * Забирает accessToken из fragment'а после редиректа с callback'а
+ * провайдера и очищает адресную строку, чтобы токен не оставался
+ * в истории браузера.
+ */
+export function consumeProviderAccessToken(): string | null {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash) {
+    return null;
+  }
+
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  if (!token) {
+    return null;
+  }
+
+  params.delete('access_token');
+  const rest = params.toString();
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${window.location.search}${rest ? `#${rest}` : ''}`,
+  );
+  return token;
+}
+
+/**
+ * URL отдельного входа через конкретного провайдера. `redirect=frontend`
+ * просит backend вернуть браузер в SPA с accessToken во фрагменте URL;
+ * остальные клиенты получают JSON с токеном.
  */
 export function providerAuthUrl(slug: string): string {
-  return `${API_URL}/api/auth/${slug}`;
+  return `${API_URL}/api/auth/${slug}?redirect=frontend`;
 }
 
 /**

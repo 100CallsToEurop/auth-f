@@ -39,9 +39,7 @@ export function ProviderButtons({ title = 'Войти через' }: ProviderBut
           key={provider.slug}
           className="button secondary"
           href={providerAuthUrl(provider.slug)}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Откроется в новой вкладке; после входа вернитесь на эту страницу"
+          title={`Перейти к ${provider.displayName} и вернуться уже вошедшим`}
         >
           {provider.displayName}
         </a>

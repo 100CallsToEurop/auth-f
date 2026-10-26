@@ -8,7 +8,13 @@ import {
   type ReactNode,
 } from 'react';
 import { ApiError, setAccessToken, type User } from '../lib/api';
-import { login as apiLogin, logout as apiLogout, refreshSession, register as apiRegister } from '../lib/auth';
+import {
+  login as apiLogin,
+  loginWithAccessToken,
+  logout as apiLogout,
+  refreshSession,
+  register as apiRegister,
+} from '../lib/auth';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -20,9 +26,18 @@ interface AuthContextValue {
   logout: () => Promise<string | null>;
 }
 
+interface AuthProviderProps {
+  children: ReactNode;
+  /** Access-токен из callback'а провайдера (фрагмент URL). */
+  initialAccessToken?: string | null;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+  initialAccessToken,
+}: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
 
@@ -30,9 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void (async () => {
       try {
-        const session = await refreshSession();
+        // После OAuth-callback'а backend вернул accessToken во фрагменте URL:
+        // входим по нему сразу, не дожидаясь обмена refresh-cookie.
+        const sessionUser = initialAccessToken
+          ? await loginWithAccessToken(initialAccessToken)
+          : (await refreshSession()).user;
         if (cancelled) return;
-        setUser(session.user);
+        setUser(sessionUser);
         setStatus('authenticated');
       } catch {
         if (cancelled) return;
@@ -44,29 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // Отдельные OAuth-входы (например, /auth/github) открываются в новой
-  // вкладке и ставят refresh-cookie. Когда пользователь возвращается в
-  // приложение, пробуем обменять её на сессию — иначе пришлось бы
-  // перезагружать страницу вручную.
-  useEffect(() => {
-    if (status !== 'unauthenticated') {
-      return;
-    }
-    const onFocus = () => {
-      void refreshSession()
-        .then((session) => {
-          setUser(session.user);
-          setStatus('authenticated');
-        })
-        .catch(() => {
-          // сессии всё ещё нет — остаёмся на форме входа
-        });
-    };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [status]);
+  }, [initialAccessToken]);
 
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     const session = await apiLogin(email, password);
