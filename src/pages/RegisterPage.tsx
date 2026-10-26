@@ -4,38 +4,83 @@ import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../lib/api';
 import { ProviderButtons } from '../components/ProviderButtons';
 
+/** Флаг из ответа 409: аккаунт создан через провайдера, пароль можно привязать. */
+function offersPasswordAttachment(error: ApiError): boolean {
+  if (error.status !== 409 || !error.body || typeof error.body !== 'object') {
+    return false;
+  }
+  return (
+    (error.body as { canAttachPassword?: unknown }).canAttachPassword === true
+  );
+}
+
 export function RegisterPage() {
-  const { register } = useAuth();
+  const { register, attachPassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [canAttachPassword, setCanAttachPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [attaching, setAttaching] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const validate = (): boolean => {
     if (!email.trim()) {
       setError('Укажите email');
-      return;
+      return false;
     }
     if (password.length < 8) {
       setError('Пароль должен быть не менее 8 символов');
-      return;
+      return false;
     }
     if (password !== confirmation) {
       setError('Пароли не совпадают');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!validate()) {
       return;
     }
     setError(null);
+    setCanAttachPassword(false);
     setSubmitting(true);
     try {
       await register(email.trim(), password);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Не удалось зарегистрироваться');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setCanAttachPassword(offersPasswordAttachment(err));
+        return;
+      }
+      setError('Не удалось зарегистрироваться');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAttachPassword = async () => {
+    if (!validate()) {
+      return;
+    }
+    setError(null);
+    setAttaching(true);
+    try {
+      await attachPassword(email.trim(), password);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Не удалось привязать пароль к аккаунту',
+      );
+    } finally {
+      setAttaching(false);
     }
   };
 
@@ -49,7 +94,10 @@ export function RegisterPage() {
           <input
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setCanAttachPassword(false);
+            }}
             autoComplete="email"
             required
           />
@@ -79,6 +127,25 @@ export function RegisterPage() {
         <button className="button" type="submit" disabled={submitting}>
           {submitting ? 'Создание аккаунта…' : 'Зарегистрироваться'}
         </button>
+        {canAttachPassword && (
+          <div className="notice" role="status">
+            <span>
+              Аккаунт с этой почтой уже существует и создан через внешний вход.
+              Пароль можно привязать к нему и сразу войти.
+            </span>
+            <span className="muted small">
+              Почта не подтверждается. Продолжайте, только если это ваш аккаунт.
+            </span>
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => void handleAttachPassword()}
+              disabled={attaching}
+            >
+              {attaching ? 'Привязка…' : 'Привязать пароль и войти'}
+            </button>
+          </div>
+        )}
         <ProviderButtons title="Продолжить через" />
         <p className="hint">
           Уже есть аккаунт? <Link to="/login">Войти</Link>

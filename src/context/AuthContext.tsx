@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { ApiError, setAccessToken, type User } from '../lib/api';
 import {
+  attachPassword as apiAttachPassword,
   confirmAccountLink as apiConfirmAccountLink,
   login as apiLogin,
   loginWithAccessToken,
@@ -24,6 +25,8 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string) => Promise<User>;
+  /** Привязать пароль к существующему SSO-аккаунту после конфликта регистрации. */
+  attachPassword: (email: string, password: string) => Promise<User>;
   /** Подтвердить владение аккаунтом и привязать к нему SSO-провайдера. */
   confirmAccountLink: (token: string, password: string) => Promise<User>;
   logout: () => Promise<string | null>;
@@ -82,6 +85,16 @@ export function AuthProvider({
     return session.user;
   }, []);
 
+  const attachPassword = useCallback(
+    async (email: string, password: string): Promise<User> => {
+      const session = await apiAttachPassword(email, password);
+      setUser(session.user);
+      setStatus('authenticated');
+      return session.user;
+    },
+    [],
+  );
+
   const confirmAccountLink = useCallback(
     async (token: string, password: string): Promise<User> => {
       const session = await apiConfirmAccountLink(token, password);
@@ -107,8 +120,24 @@ export function AuthProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, login, register, confirmAccountLink, logout }),
-    [user, status, login, register, confirmAccountLink, logout],
+    () => ({
+      user,
+      status,
+      login,
+      register,
+      attachPassword,
+      confirmAccountLink,
+      logout,
+    }),
+    [
+      user,
+      status,
+      login,
+      register,
+      attachPassword,
+      confirmAccountLink,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

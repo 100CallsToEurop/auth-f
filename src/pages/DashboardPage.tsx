@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { ApiError, isSafeRedirect, type ProviderInfo, type User } from '../lib/api';
 import { fetchCurrentUser, fetchProviders } from '../lib/auth';
 import { ProviderSettings } from '../components/ProviderButtons';
+import { PasswordSection } from '../components/PasswordSection';
 import { SessionsPanel } from '../components/SessionsPanel';
 
 /** Локальный способ входа — его нет в реестре внешних провайдеров. */
@@ -20,7 +21,7 @@ function displayName(user: User): string {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
-  const [profile, setProfile] = useState<User | null>(user);
+  const [profile, setProfile] = useState<User | null>(null);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +118,9 @@ export function DashboardPage() {
             </dd>
           </div>
         </dl>
+        {profile && (
+          <PasswordSection user={profile} onChange={setProfile} />
+        )}
         <ProviderSettings
           providers={providers}
           linked={current.providers ?? []}

@@ -32,6 +32,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** Тело ответа: в нём бывают машинно-читаемые флаги (canAttachPassword). */
+    readonly body: unknown = null,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -59,13 +61,13 @@ function toApiError(status: number, data: unknown): ApiError {
   if (data && typeof data === 'object' && 'message' in data) {
     const { message } = data as { message: unknown };
     if (Array.isArray(message)) {
-      return new ApiError(status, message.join(', '));
+      return new ApiError(status, message.join(', '), data);
     }
     if (typeof message === 'string') {
-      return new ApiError(status, message);
+      return new ApiError(status, message, data);
     }
   }
-  return new ApiError(status, `Ошибка запроса (${status})`);
+  return new ApiError(status, `Ошибка запроса (${status})`, data);
 }
 
 async function parseBody<T>(res: Response): Promise<T> {

@@ -18,6 +18,25 @@ export function register(email: string, password: string): Promise<Session> {
   return startSession('/auth/register', { email, password });
 }
 
+/**
+ * Привязка пароля к аккаунту, созданному через провайдера, после конфликта
+ * регистрации. Backend сразу открывает сессию по паролю.
+ */
+export function attachPassword(
+  email: string,
+  password: string,
+): Promise<Session> {
+  return startSession('/auth/register/attach-password', { email, password });
+}
+
+/** Создание пароля в профиле (только если пароля ещё нет). */
+export function setPassword(password: string): Promise<User> {
+  return apiRequest<User>('/auth/password', {
+    method: 'PUT',
+    body: { password },
+  });
+}
+
 export async function refreshSession(): Promise<Session> {
   const session = await refreshAccessToken();
   if (!session) {
