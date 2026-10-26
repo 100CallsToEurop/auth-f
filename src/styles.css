@@ -207,7 +207,14 @@ input:focus {
 
 .provider-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+/* Форма внутри строки действий — не должна занимать всю ширину. */
+.inline-form {
+  display: inline;
+  margin: 0;
 }
 
 .link {
@@ -218,11 +225,14 @@ input:focus {
   font: inherit;
   font-size: 0.8125rem;
   cursor: pointer;
-  text-decoration: none;
+  /* Подчёркивание постоянное: иначе действие отличается от текста только
+     цветом, что плохо читается при низкой контрастности. */
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .link:hover:not(:disabled) {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .link:disabled {

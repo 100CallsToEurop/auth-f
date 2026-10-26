@@ -18,14 +18,6 @@ export interface ProviderInfo {
   displayName: string;
 }
 
-/** Провайдеры, которые предлагаем, если реестр недоступен. */
-export const DEFAULT_PROVIDERS: ProviderInfo[] = [
-  { slug: 'authentik', displayName: 'Authentik' },
-  { slug: 'yandex', displayName: 'Яндекс' },
-  { slug: 'github', displayName: 'GitHub' },
-  { slug: 'invision', displayName: 'Invision Community' },
-];
-
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -45,10 +37,6 @@ let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
-}
-
-export function getAccessToken(): string | null {
-  return accessToken;
 }
 
 interface RequestOptions {
@@ -107,16 +95,30 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   }
 }
 
-async function refreshAccessToken(): Promise<Session | null> {
-  try {
-    const res = await send('/auth/refresh', { method: 'POST', auth: false });
-    const session = await parseBody<Session>(res);
-    setAccessToken(session.accessToken);
-    return session;
-  } catch {
-    setAccessToken(null);
-    return null;
+/**
+ * Обновление access-токена. Запрос выполняется один раз: параллельные
+ * вызовы (несколько запросов одновременно получили 401) ждут один и тот же
+ * промис. Иначе второй ответ затирал бы токен, установленный первым.
+ */
+let refreshPromise: Promise<Session | null> | null = null;
+
+export function refreshAccessToken(): Promise<Session | null> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await send('/auth/refresh', { method: 'POST', auth: false });
+        const session = await parseBody<Session>(res);
+        setAccessToken(session.accessToken);
+        return session;
+      } catch {
+        setAccessToken(null);
+        return null;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
   }
+  return refreshPromise;
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -128,4 +130,18 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
   return parseBody<T>(res);
+}
+
+/**
+ * Проверка URL, полученного от сервера, перед переходом: допускаются только
+ * http(s)-адреса. Иначе значение из ответа сервера (например, logoutUrl)
+ * могло бы превратиться в javascript:-редирект.
+ */
+export function isSafeRedirect(url: string): boolean {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }

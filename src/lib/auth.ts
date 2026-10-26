@@ -1,8 +1,8 @@
 import {
   API_URL,
   ApiError,
-  DEFAULT_PROVIDERS,
   apiRequest,
+  refreshAccessToken,
   setAccessToken,
   type ProviderInfo,
   type Session,
@@ -18,8 +18,10 @@ export function register(email: string, password: string): Promise<Session> {
 }
 
 export async function refreshSession(): Promise<Session> {
-  const session = await apiRequest<Session>('/auth/refresh', { method: 'POST', auth: false });
-  setAccessToken(session.accessToken);
+  const session = await refreshAccessToken();
+  if (!session) {
+    throw new ApiError(401, 'Сессия истекла');
+  }
   return session;
 }
 
@@ -44,7 +46,6 @@ export interface SessionInfo {
   device: string;
   ip: string | null;
   createdAt: string;
-  lastUsedAt: string | null;
   expiresAt: string;
   current: boolean;
 }
@@ -89,11 +90,30 @@ export function externalAuthUrl(slug: string): string {
 }
 
 /**
+ * URL отдельного входа через конкретного провайдера. Callback отвечает JSON
+ * с accessToken, поэтому ссылку открываем в новой вкладке: приложение
+ * остаётся на месте, а refresh-cookie устанавливается для API.
+ */
+export function providerAuthUrl(slug: string): string {
+  return `${API_URL}/api/auth/${slug}`;
+}
+
+/**
  * Синхронизация профиля из провайдера: браузер уходит на callback провайдера,
  * backend после подтверждения обновит профиль и вернёт в приложение.
+ *
+ * Запрос отправляется POST-формой: состояние меняется, а refresh-cookie
+ * на кросс-сайтовом POST не отправляется (SameSite=Lax).
  */
 export function externalSyncUrl(slug: string): string {
   return `${API_URL}/api/auth/external/${slug}/sync`;
+}
+
+/**
+ * Явная привязка провайдера к текущему аккаунту (из профиля). Тоже POST.
+ */
+export function externalLinkUrl(slug: string): string {
+  return `${API_URL}/api/auth/external/${slug}/link`;
 }
 
 /** Отвязка способа входа от аккаунта. */
@@ -101,17 +121,18 @@ export function unlinkProvider(slug: string): Promise<User> {
   return apiRequest<User>(`/auth/external/${slug}`, { method: 'DELETE' });
 }
 
-/** Список включённых провайдеров (при недоступности API — дефолтный набор). */
+/**
+ * Список внешних провайдеров. Если API недоступен — возвращаем пустой
+ * список, чтобы страница входа не падала.
+ */
 export async function fetchProviders(): Promise<ProviderInfo[]> {
   try {
     const providers = await apiRequest<ProviderInfo[]>('/auth/providers', {
       auth: false,
     });
-    return Array.isArray(providers) && providers.length
-      ? providers
-      : DEFAULT_PROVIDERS;
+    return Array.isArray(providers) ? providers : [];
   } catch {
-    return DEFAULT_PROVIDERS;
+    return [];
   }
 }
 

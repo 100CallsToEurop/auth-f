@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ApiError, type User } from '../lib/api';
-import { fetchCurrentUser } from '../lib/auth';
+import { ApiError, isSafeRedirect, type ProviderInfo, type User } from '../lib/api';
+import { fetchCurrentUser, fetchProviders } from '../lib/auth';
 import { ProviderSettings } from '../components/ProviderButtons';
 import { SessionsPanel } from '../components/SessionsPanel';
 
-const PROVIDER_LABELS: Record<string, string> = {
+/** Локальный способ входа — его нет в реестре внешних провайдеров. */
+const LOCAL_PROVIDER_LABELS: Record<string, string> = {
   password: 'Пароль',
-  authentik: 'Authentik',
-  yandex: 'Яндекс',
-  github: 'GitHub',
-  invision: 'Invision Community',
 };
 
 function displayName(user: User): string {
@@ -24,6 +21,7 @@ function displayName(user: User): string {
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState<User | null>(user);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -44,15 +42,38 @@ export function DashboardPage() {
     void loadProfile();
   }, [loadProfile]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void fetchProviders().then((list) => {
+      if (!cancelled) {
+        setProviders(list);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Названия способов входа берём из API, а не из второй копии в коде.
+  const providerLabels = useMemo(() => {
+    const labels: Record<string, string> = { ...LOCAL_PROVIDER_LABELS };
+    for (const provider of providers) {
+      labels[provider.slug] = provider.displayName;
+    }
+    return labels;
+  }, [providers]);
+
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
       const logoutUrl = await logout();
-      if (logoutUrl) {
+      if (logoutUrl && isSafeRedirect(logoutUrl)) {
         window.location.href = logoutUrl;
         return;
       }
       window.location.href = '/login';
+    } catch {
+      setError('Не удалось выйти');
     } finally {
       setLoggingOut(false);
     }
@@ -67,7 +88,7 @@ export function DashboardPage() {
     <div className="page">
       <div className="card">
         <h1>Профиль</h1>
-        {error && <div className="error">{error}</div>}
+        {error && <div className="error" role="alert">{error}</div>}
         <dl className="details">
           <div>
             <dt>Имя</dt>
@@ -87,7 +108,7 @@ export function DashboardPage() {
               {current.providers?.length ? (
                 current.providers.map((provider) => (
                   <span className="chip" key={provider}>
-                    {PROVIDER_LABELS[provider] ?? provider}
+                    {providerLabels[provider] ?? provider}
                   </span>
                 ))
               ) : (
@@ -97,6 +118,7 @@ export function DashboardPage() {
           </div>
         </dl>
         <ProviderSettings
+          providers={providers}
           linked={current.providers ?? []}
           onChange={setProfile}
           onError={setError}

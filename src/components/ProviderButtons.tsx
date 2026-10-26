@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { DEFAULT_PROVIDERS, type ProviderInfo, type User } from '../lib/api';
+import { type ProviderInfo, type User } from '../lib/api';
 import {
   externalAuthUrl,
+  externalLinkUrl,
   externalSyncUrl,
   fetchProviders,
+  providerAuthUrl,
   unlinkProvider,
 } from '../lib/auth';
 
@@ -12,7 +14,7 @@ interface ProviderButtonsProps {
 }
 
 export function ProviderButtons({ title = 'Войти через' }: ProviderButtonsProps) {
-  const [providers, setProviders] = useState<ProviderInfo[]>(DEFAULT_PROVIDERS);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,43 +33,53 @@ export function ProviderButtons({ title = 'Войти через' }: ProviderBut
   }
 
   return (
-    <div className="providers">
-      <div className="providers-title">{title}</div>
-      {providers.map((provider) => (
-        <a
-          key={provider.slug}
-          className="button secondary"
-          href={externalAuthUrl(provider.slug)}
-        >
-          {provider.displayName}
-        </a>
-      ))}
-    </div>
+    <>
+      <div className="providers">
+        <div className="providers-title">{title}</div>
+        {providers.map((provider) => (
+          <a
+            key={provider.slug}
+            className="button secondary"
+            href={externalAuthUrl(provider.slug)}
+          >
+            {provider.displayName}
+          </a>
+        ))}
+      </div>
+      <div className="providers">
+        <div className="providers-title">Отдельные входы (API)</div>
+        {providers.map((provider) => (
+          <a
+            key={provider.slug}
+            className="button secondary"
+            href={providerAuthUrl(provider.slug)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Откроется в новой вкладке и вернёт accessToken в JSON"
+          >
+            {provider.displayName}
+          </a>
+        ))}
+      </div>
+    </>
   );
 }
 
 interface ProviderSettingsProps {
+  providers: ProviderInfo[];
   linked: string[];
   onChange: (user: User) => void;
   onError: (message: string) => void;
 }
 
 /** Управление способами входа: привязка, синхронизация и отвязка. */
-export function ProviderSettings({ linked, onChange, onError }: ProviderSettingsProps) {
-  const [providers, setProviders] = useState<ProviderInfo[]>(DEFAULT_PROVIDERS);
+export function ProviderSettings({
+  providers,
+  linked,
+  onChange,
+  onError,
+}: ProviderSettingsProps) {
   const [busy, setBusy] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchProviders().then((list) => {
-      if (!cancelled) {
-        setProviders(list);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const handleUnlink = async (slug: string) => {
     setBusy(slug);
@@ -96,13 +108,17 @@ export function ProviderSettings({ linked, onChange, onError }: ProviderSettings
             <span>{provider.displayName}</span>
             <div className="provider-actions">
               {isLinked && (
-                <a
-                  className="link"
-                  href={externalSyncUrl(provider.slug)}
-                  title="Обновить профиль из провайдера"
+                // Синхронизация меняет данные аккаунта — только POST, иначе
+                // состояние менялось бы обычным переходом по ссылке.
+                <form
+                  method="post"
+                  action={externalSyncUrl(provider.slug)}
+                  className="inline-form"
                 >
-                  Обновить
-                </a>
+                  <button type="submit" className="link" title="Обновить профиль из провайдера">
+                    Обновить
+                  </button>
+                </form>
               )}
               {isLinked ? (
                 <button
@@ -114,9 +130,16 @@ export function ProviderSettings({ linked, onChange, onError }: ProviderSettings
                   {busy === provider.slug ? '…' : 'Отвязать'}
                 </button>
               ) : (
-                <a className="link" href={externalAuthUrl(provider.slug)}>
-                  Привязать
-                </a>
+                // Привязка нового способа входа к текущему аккаунту.
+                <form
+                  method="post"
+                  action={externalLinkUrl(provider.slug)}
+                  className="inline-form"
+                >
+                  <button type="submit" className="link">
+                    Привязать
+                  </button>
+                </form>
               )}
             </div>
           </div>

@@ -43,7 +43,7 @@ export function RegisterPage() {
     <div className="page">
       <form className="card" onSubmit={(event) => void handleSubmit(event)}>
         <h1>Регистрация</h1>
-        {error && <div className="error">{error}</div>}
+        {error && <div className="error" role="alert">{error}</div>}
         <label className="field">
           <span>Email</span>
           <input

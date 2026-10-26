@@ -46,6 +46,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Отдельные OAuth-входы (например, /auth/github) открываются в новой
+  // вкладке и ставят refresh-cookie. Когда пользователь возвращается в
+  // приложение, пробуем обменять её на сессию — иначе пришлось бы
+  // перезагружать страницу вручную.
+  useEffect(() => {
+    if (status !== 'unauthenticated') {
+      return;
+    }
+    const onFocus = () => {
+      void refreshSession()
+        .then((session) => {
+          setUser(session.user);
+          setStatus('authenticated');
+        })
+        .catch(() => {
+          // сессии всё ещё нет — остаёмся на форме входа
+        });
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [status]);
+
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     const session = await apiLogin(email, password);
     setUser(session.user);

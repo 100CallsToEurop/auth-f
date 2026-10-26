@@ -8,7 +8,7 @@ import { RegisterPage } from './pages/RegisterPage';
 function Loading() {
   return (
     <div className="page">
-      <div className="spinner" aria-label="Загрузка" />
+      <div className="spinner" role="status" aria-live="polite" aria-label="Загрузка" />
     </div>
   );
 }
