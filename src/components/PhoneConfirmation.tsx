@@ -63,10 +63,9 @@ export function PhoneConfirmation({ user, onChange }: PhoneConfirmationProps) {
 
       {!user.phoneVerified && (
         <div className="notice">
-          <span>Подтверждение условное.</span>
+          <span>Подтверждение условное: код не отправляется.</span>
           <span className="muted small">
-            Код не отправляется: введите номер, и он сразу будет считаться
-            подтверждённым.
+            Введите номер — он сразу станет подтверждённым.
           </span>
         </div>
       )}
