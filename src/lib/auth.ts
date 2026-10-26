@@ -78,16 +78,15 @@ export async function refreshSession(): Promise<Session> {
 }
 
 /**
- * Выход из текущей сессии. Возвращает URL выхода из SSO-провайдера, если
- * текущая сессия была открыта через него, — по нему нужно перейти.
+ * Выход из текущей сессии приложения. SSO-сессия провайдера не завершается:
+ * редиректа на сторону провайдера нет, пользователь остаётся в приложении.
  */
-export async function logout(): Promise<string | null> {
-  const result = await apiRequest<{ logoutUrl?: string | null }>('/auth/logout', {
+export async function logout(): Promise<void> {
+  await apiRequest<{ ok: true }>('/auth/logout', {
     method: 'POST',
     auth: false,
   });
   setAccessToken(null);
-  return result.logoutUrl ?? null;
 }
 
 /** Описание активной сессии (устройства) пользователя. */
@@ -120,16 +119,12 @@ export function revokeOtherSessions(): Promise<{ ok: true; revoked: number }> {
 }
 
 /**
- * Выход со всех устройств. Если текущая сессия открыта через SSO-провайдер
- * (Authentik), возвращает URL выхода из его SSO-сессии — по нему нужно перейти.
+ * Выход со всех устройств: приложение отзывает все свои сессии, но не
+ * завершает SSO-сессию провайдера.
  */
-export async function logoutAll(): Promise<string | null> {
-  const result = await apiRequest<{ logoutUrl?: string | null }>(
-    '/auth/logout/all',
-    { method: 'POST' },
-  );
+export async function logoutAll(): Promise<void> {
+  await apiRequest<{ ok: true }>('/auth/logout/all', { method: 'POST' });
   setAccessToken(null);
-  return result.logoutUrl ?? null;
 }
 
 export function fetchCurrentUser(): Promise<User> {

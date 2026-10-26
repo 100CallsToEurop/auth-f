@@ -29,7 +29,8 @@ interface AuthContextValue {
   attachPassword: (email: string, password: string) => Promise<User>;
   /** Подтвердить владение аккаунтом и привязать к нему SSO-провайдера. */
   confirmAccountLink: (token: string, password: string) => Promise<User>;
-  logout: () => Promise<string | null>;
+  /** Завершить локальную сессию и перейти на страницу входа приложения. */
+  logout: () => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -105,18 +106,18 @@ export function AuthProvider({
     [],
   );
 
-  const logout = useCallback(async (): Promise<string | null> => {
-    let logoutUrl: string | null = null;
+  const logout = useCallback(async (): Promise<void> => {
     try {
-      logoutUrl = await apiLogout();
+      await apiLogout();
     } catch (error) {
+      // Локальное состояние очищаем в любом случае: даже если запрос не
+      // дошёл, пользователь должен вернуться на страницу входа.
       if (!(error instanceof ApiError)) {
         throw error;
       }
     }
     setUser(null);
     setStatus('unauthenticated');
-    return logoutUrl;
   }, []);
 
   const value = useMemo(

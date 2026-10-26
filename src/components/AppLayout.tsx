@@ -9,7 +9,6 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   ApiError,
-  isSafeRedirect,
   type ProviderInfo,
   type User,
 } from '../lib/api';
@@ -144,17 +143,15 @@ export function AppLayout() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      const logoutUrl = await logout();
-      if (logoutUrl && isSafeRedirect(logoutUrl)) {
-        window.location.href = logoutUrl;
-        return;
-      }
-      window.location.href = '/login';
+      // Завершаем только локальную сессию: SSO-провайдер не открывается,
+      // пользователь остаётся на странице входа приложения.
+      await logout();
     } catch {
       setError('Не удалось выйти');
-    } finally {
       setLoggingOut(false);
+      return;
     }
+    window.location.href = '/login';
   };
 
   if (!user) {

@@ -150,16 +150,3 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return parseBody<T>(res);
 }
 
-/**
- * Проверка URL, полученного от сервера, перед переходом: допускаются только
- * http(s)-адреса. Иначе значение из ответа сервера (например, logoutUrl)
- * могло бы превратиться в javascript:-редирект.
- */
-export function isSafeRedirect(url: string): boolean {
-  try {
-    const parsed = new URL(url, window.location.origin);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}

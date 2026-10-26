@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, isSafeRedirect } from '../lib/api';
+import { ApiError } from '../lib/api';
 import {
   fetchSessions,
   logoutAll,
@@ -74,14 +74,9 @@ export function SessionsPanel({ onError }: SessionsPanelProps) {
   const handleLogoutAll = async () => {
     setBusy('all');
     try {
-      // Бэкенд сам определяет провайдера текущей сессии: если вход был через
-      // SSO (Authentik) — вернёт URL выхода из SSO, иначе просто выходим.
-      const logoutUrl = await logoutAll();
-      if (logoutUrl && isSafeRedirect(logoutUrl)) {
-        window.location.href = logoutUrl;
-        return;
-      }
-      // Завершены все сессии (включая текущую) — уводим на страницу входа.
+      // Завершаются все сессии приложения; SSO-провайдер не открывается,
+      // поэтому после выхода сразу уводим на страницу входа.
+      await logoutAll();
       completeLogout();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Не удалось выполнить выход');
